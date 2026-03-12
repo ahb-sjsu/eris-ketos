@@ -49,9 +49,9 @@ coda type taxonomy embeds with lower distortion in the Poincar\'e ball
 than in Euclidean space, consistent with tree-like combinatorial structure;
 (2)~persistent homology on inter-click interval point clouds reveals
 topologically distinct attractors per rhythm class;
-(3)~adversarial acoustic perturbations map asymmetric phonetic decision
-boundaries (mean asymmetry $= 0.87$), analogous to directional vowel
-chain shifts in human language; (4)~the coda system satisfies
+(3)~adversarial acoustic perturbations applied to a nearest-centroid
+decoder reveal asymmetric classification boundary crossings
+(mean asymmetry $= 0.87$); (4)~the coda system satisfies
 Menzerath's law ($r = -0.269$, $p < 10^{-144}$), exhibits higher-order
 Markov sequential structure, and supports active turn-taking with
 cross-whale response latency approximately half that of same-whale
@@ -126,9 +126,9 @@ In this work, we present five contributions:
     (Section~\ref{sec:dri}).
 
     \item \textbf{Adversarial perturbation as a discovery tool},
-    revealing asymmetric phonetic boundaries and empirically estimating
-    channel capacity at approximately 3.0 bits per coda
-    (Section~\ref{sec:fuzz}).
+    revealing asymmetric classification boundaries and estimating a
+    lower bound of approximately 3.0 bits of decodable information per
+    coda (Section~\ref{sec:fuzz}).
 
     \item \textbf{Linguistic universals}, confirming Menzerath's law,
     higher-order Markov structure, individual accents, and active
@@ -171,16 +171,28 @@ ordered entries across 11 identified whales.
 
 We parsed the 28 coda types into a three-level taxonomy (rhythm
 class $\to$ click count $\to$ variant) and constructed a taxonomic
-distance matrix (see Methods). Coda types were embedded into a
-$d$-dimensional Poincar\'e ball ($d = \min(16, n_\mathrm{types})$) via
-gradient descent on a distortion loss, and compared against Euclidean
-embedding via PCA on the same distance matrix (figure~\ref{fig:poincare}).
+distance matrix (see Methods). Because this taxonomy is tree-like by
+construction, hyperbolic space is expected to embed it with lower
+distortion than Euclidean space~\citep{Sarkar2011}; our aim is to
+quantify the magnitude of this advantage and assess whether it transfers
+to downstream classification.
+
+Coda types were embedded into a $d$-dimensional Poincar\'e ball
+($d = \min(16, n_\mathrm{types})$) via gradient descent on a distortion
+loss, and compared against Euclidean embedding via PCA on the same
+distance matrix (figure~\ref{fig:poincare}).
 
 The Poincar\'e embedding achieved higher Spearman rank correlation
 ($\rho$) between embedded pairwise distances and true taxonomic
-distances than the Euclidean baseline (figure~\ref{fig:distortion}),
-consistent with the theoretical advantage of hyperbolic geometry for
-tree-like structures.
+distances than the Euclidean baseline (figure~\ref{fig:distortion}).
+This result is consistent with theory and supports the \emph{suitability}
+of hyperbolic representations for the coda hierarchy; it does not by
+itself demonstrate that the whales' internal representation is
+hyperbolic. Stronger evidence would require showing that hyperbolic
+embeddings outperform Euclidean methods optimised for the same
+distortion objective (e.g., multidimensional scaling or Isomap), and
+that the advantage diminishes under randomised taxonomy controls---both
+are natural targets for future work.
 
 \begin{figure}[H]
     \centering
@@ -228,7 +240,11 @@ Poincar\'e embeddings (figure~\ref{fig:classification}).
         (\textit{Right}) Comparison of classification accuracy across
         methods. All classifiers use the same 11-dimensional feature
         representation (9 duration-normalised ICIs, log-duration,
-        normalised click count) with 80/20 train/test split.
+        normalised click count) with 80/20 stratified random split.
+        Note that codas from the same individual or session may appear
+        in both splits; grouped cross-validation (leave-one-whale-out
+        or leave-one-session-out) would provide a more conservative
+        estimate.
     }
     \label{fig:classification}
 \end{figure}
@@ -287,13 +303,23 @@ Euclidean summary statistics cannot.
 
 \subsection{SPD manifold analysis of spectral structure}
 
-Frequency-band covariance matrices computed from mel spectrograms of
-synthesised coda signals are symmetric positive definite (SPD) and
-reside on a Riemannian manifold. Using the log-Euclidean metric, we
-extracted SPD features that capture inter-band harmonic correlations
-(figure~\ref{fig:spd}). PCA on SPD features separated coda types with
-different spectral profiles, and the inter-type SPD distance matrix
-showed clear cluster structure aligned with the rhythm class taxonomy.
+To demonstrate how Riemannian geometry can be applied to spectral
+features of cetacean clicks, we computed frequency-band covariance
+matrices from mel spectrograms of synthesised coda signals. These
+matrices are symmetric positive definite (SPD) and reside on a
+Riemannian manifold. Using the log-Euclidean metric, we extracted SPD
+features that capture inter-band harmonic correlations
+(figure~\ref{fig:spd}). PCA on SPD features separated coda types, and
+the inter-type SPD distance matrix showed cluster structure aligned with
+the rhythm class taxonomy.
+
+We emphasise that these results reflect the spectral properties of our
+synthesis model (Gaussian-enveloped click trains), not necessarily the
+spectral properties of real whale clicks. The value of this analysis is
+methodological: it establishes a Riemannian spectral analysis pipeline
+that can be applied directly to real recordings when available, where
+the vowel-like spectral patterns reported by \citet{Begus2025} are
+expected to produce richer manifold structure.
 
 \begin{figure}[H]
     \centering
@@ -312,10 +338,20 @@ showed clear cluster structure aligned with the rhythm class taxonomy.
 \label{sec:dri}
 
 The Decoder Robustness Index (DRI) adapts the Bond Index adversarial
-fuzzing framework to cetacean communication decoders. A simple
-nearest-centroid ICI decoder was tested against nine parametric acoustic
-transforms at three intensity levels, plus 15 compositional transform
-chains (figure~\ref{fig:dri}).
+fuzzing framework to cetacean communication decoders. Acoustic
+transforms are applied at the waveform level; ICIs are then
+re-extracted from the perturbed signal using a peak-detection click
+detector (minimum inter-click gap $= 10$~ms, amplitude threshold
+$= 0.3\times$ peak), and the re-extracted ICIs are passed to the
+decoder. This end-to-end pipeline ensures that waveform perturbations
+affect the decoder only through their impact on extractable ICI
+features.
+
+A nearest-centroid ICI decoder was tested against nine parametric
+acoustic transforms at three intensity levels, plus 15 compositional
+transform chains (figure~\ref{fig:dri}). While this baseline decoder is
+deliberately simple, the DRI framework is decoder-agnostic: any model
+that maps acoustic input to coda classifications can be substituted.
 
 The overall DRI quantifies decoder reliability on a 0--1 scale (lower
 $=$ more robust), decomposed into invariant transforms (where a correct
@@ -383,13 +419,21 @@ vulnerability. Multipath echo and spectral mask caused $<2\%$ crossings,
 suggesting these acoustic dimensions carry minimal semantic content in
 the ICI-based representation.
 
-\subsubsection*{Phonetic boundary asymmetry}
-The phonetic neighbourhood map revealed a mean boundary asymmetry of
-0.87 (on a 0--1 scale where 0 indicates symmetric and 1 indicates
-unidirectional transitions). For example, 5R3 $\to$ 4R2 exhibited 223
-crossings while 4R2 $\to$ 5R3 exhibited 0. This asymmetry is
-reminiscent of directional vowel chain shifts in human phonology, where
-perturbation-induced transitions favour specific directions.
+\subsubsection*{Classification boundary asymmetry}
+The transition matrix of decoder misclassifications revealed a mean
+boundary asymmetry of 0.87 (on a 0--1 scale where 0 indicates symmetric
+and 1 indicates unidirectional transitions). For example, perturbation
+of 5R3 codas caused misclassification as 4R2 in 223 instances, while
+the reverse (4R2 $\to$ 5R3) occurred 0 times. This asymmetry exhibits a
+formal similarity to directional chain shifts observed in human
+phonology, in that perturbation-induced transitions favour specific
+directions. However, we note that this finding characterises the
+\emph{decision boundaries of the decoder}, not necessarily the whales'
+perceptual space. Replication across multiple decoders (e.g., calibrated
+random forest, gradient-boosted classifier, or a deep learning model
+such as WhAM) would be needed to establish whether the asymmetry is a
+property of the signal space itself rather than an artifact of the
+nearest-centroid pipeline.
 
 \subsubsection*{Per-type robustness}
 Irregular codas exhibited the highest mean activation threshold (0.944),
@@ -397,13 +441,18 @@ while compound codas were least robust (0.800). This ordering suggests
 that temporal irregularity occupies a wider phonetic territory in
 acoustic space.
 
-\subsubsection*{Channel capacity estimate}
+\subsubsection*{Robustly decodable information}
 All eight tested coda types remained well-separated under perturbation
-(activation threshold $> 0.5$), yielding an empirical channel capacity
-estimate of $\log_2(8) = 3.0$ bits per coda. This exceeds the unigram
-entropy of the rhythm distribution alone ($H(R) = 2.1$ bits), consistent
-with multi-feature information encoding across the combinatorial
-space identified by \citet{Sharma2024}.
+(activation threshold $> 0.5$), yielding a lower bound of $\log_2(8) =
+3.0$ bits of decodable information per coda. We term this the
+\emph{robustly distinguishable class count} under the tested
+perturbation channel; it is not a channel capacity in the
+information-theoretic sense (which would require estimating
+$I(\text{true}; \text{decoded})$ over a perturbation distribution with
+confidence intervals). This lower bound exceeds the unigram entropy of
+the rhythm distribution alone ($H(R) = 2.1$ bits), consistent with
+multi-feature information encoding across the combinatorial space
+identified by \citet{Sharma2024}.
 
 \begin{figure}[H]
     \centering
@@ -434,20 +483,29 @@ language (figure~\ref{fig:linguistic}).
 
 \subsubsection*{Menzerath's law}
 Longer codas (more clicks) had shorter mean ICIs (Spearman $r = -0.269$,
-$p < 10^{-144}$, $n = 8{,}719$), confirming the linguistic universal
-that longer constructs are composed of shorter constituents. This result
-is consistent with the cross-species meta-analysis
-of~\citet{Youngblood2025}.
+$n = 8{,}719$). With this sample size, even weak correlations achieve
+extreme significance ($p < 10^{-144}$); the relevant quantity is the
+effect size, which at $|r| = 0.27$ represents a modest but robust
+negative association. This is consistent with the cross-species
+meta-analysis of~\citet{Youngblood2025}, who reported Menzerath's law
+across multiple cetacean species. A mixed-effects model with random
+intercepts for whale and recording session would provide a more rigorous
+test by accounting for pseudo-replication; we report the simple
+correlation here as a first-order confirmation.
 
 \subsubsection*{Zipf's law}
 The rank-frequency distribution of coda types followed a power law with
 exponent $\alpha = 1.44$, steeper than the $\alpha \approx 1.0$ typical
 of human language, indicating a more skewed distribution dominated by a
-few high-frequency types (1+1+3, 5R1, 5R3). Zipf's law of abbreviation
-(negative correlation between frequency and duration) was not
-statistically significant at the type level ($r = -0.129$, $p = 0.50$),
-though this may reflect the small number of distinct types (28) rather
-than an absence of the effect.
+few high-frequency types (1+1+3, 5R1, 5R3). We note that power-law
+claims over 28 types require caution: with such limited support,
+alternative distributions (e.g., log-normal) may fit comparably. A
+formal model-comparison approach following \citet{Youngblood2025} would
+strengthen this finding; we report the fitted exponent as a descriptive
+summary. Zipf's law of abbreviation (negative correlation between
+frequency and duration) was not statistically significant at the type
+level ($r = -0.129$, $p = 0.50$), likely reflecting the small number of
+distinct types rather than an absence of the effect.
 
 \subsubsection*{Sequential structure}
 Coda exchanges exhibited first-order Markov dependencies: the mutual
@@ -460,16 +518,24 @@ beyond pairwise dependencies.
 \subsubsection*{Turn-taking}
 Cross-whale response latency ($\bar{x} = 2.25$~s, $n = 2{,}225$) was
 approximately half that of same-whale continuation latency ($\bar{x} =
-4.68$~s, $n = 1{,}379$), with highly significant distributional
-difference (Kolmogorov--Smirnov $D = 0.560$, $p < 10^{-247}$). This
-indicates active turn-taking rather than independent vocalisation.
+4.68$~s, $n = 1{,}379$), with a large distributional difference
+(Kolmogorov--Smirnov $D = 0.560$). The extreme $p$-value
+($p < 10^{-247}$) reflects the large sample size; the effect size
+($D = 0.56$, 2.08$\times$ latency ratio) is the more informative
+quantity. These latencies are likely non-independent within recording
+sessions and dyads; a hierarchical model with random intercepts for
+session and whale pair would provide a more rigorous test. Nonetheless,
+the large effect size is consistent with active turn-taking rather than
+independent vocalisation.
 
 \subsubsection*{Individual accents}
 For the most common coda type (1+1+3), pairwise Kolmogorov--Smirnov
 tests between ICI distributions of four identified whales revealed
-statistically significant differences for all six pairs ($p < 0.001$),
-confirming that individuals encode identity information within
-ostensibly standardised coda types~\citep{Gero2016,Hersh2022}.
+statistically significant differences for all six pairs ($p < 0.001$
+for each pair; all remain significant after Bonferroni correction for
+6 comparisons at $\alpha = 0.05$). This confirms that individuals
+encode identity information within ostensibly standardised coda
+types~\citep{Gero2016,Hersh2022}.
 
 \begin{figure}[H]
     \centering
@@ -503,15 +569,21 @@ homology distinguishes rhythm classes by their topological signatures,
 and adversarial perturbation maps phonetic decision boundaries with a
 precision that traditional classification accuracy cannot achieve.
 
-The discovery of highly asymmetric phonetic boundaries (mean asymmetry
-$= 0.87$) is particularly noteworthy. In human phonology, directional
-chain shifts---where perturbation-induced transitions favour specific
-directions---are a well-studied phenomenon that reflects the geometry of
-the phonetic space~\citep{Cantor2013}. The observation of analogous
-asymmetry in sperm whale codas suggests that the coda combinatorial
-space possesses a non-trivial geometric structure with preferred
-transition directions, potentially reflecting acoustic or perceptual
-constraints on coda production and reception.
+The highly asymmetric classification boundaries (mean asymmetry
+$= 0.87$) are a notable finding, though their interpretation requires
+care. The asymmetry characterises the \emph{decoder's decision
+boundaries}: perturbation-induced misclassifications are strongly
+directional, with certain type pairs exhibiting hundreds of transitions
+in one direction and zero in the reverse. While this pattern exhibits a
+formal similarity to directional chain shifts in human phonology, we
+cannot at present determine whether the asymmetry reflects structure in
+the whales' signal space or biases in the nearest-centroid decoder.
+Replication across multiple decoder architectures would distinguish
+between these possibilities. If the asymmetry persists across decoders,
+it would constitute evidence that the coda combinatorial space possesses
+a non-trivial geometry with preferred transition directions, potentially
+reflecting acoustic or perceptual constraints on coda production and
+reception.
 
 The confirmation of multiple linguistic universals (Menzerath's law,
 Zipf's law, higher-order Markov structure, active turn-taking) adds to
@@ -523,12 +595,16 @@ hierarchy documented by \citet{Gero2016} and~\citet{Hersh2022}, and
 suggests a dual function for codas: type-level information at the
 group/clan scale, and individual-level signatures within each type.
 
-The turn-taking result (2.08$\times$ faster cross-whale responses) is
-consistent with interactive dialogue rather than independent broadcast.
-Combined with the higher-order Markov structure, this suggests that coda
-exchanges involve sequential planning over at least two preceding
-codas---a form of contextual communication that parallels the
-rubato and ornamentation features identified by \citet{Sharma2024}.
+The turn-taking result (2.08$\times$ faster cross-whale responses,
+$D = 0.56$) is consistent with interactive dialogue rather than
+independent broadcast, though confirmation with hierarchical models
+controlling for session and dyad effects is warranted. Combined with
+the higher-order Markov structure, this pattern is consistent with
+sequential planning over at least two preceding codas, though we
+cannot rule out simpler explanations (e.g., arousal-dependent call
+rate). The contextual features (rubato, ornamentation) identified by
+\citet{Sharma2024} may provide a mechanism for this sequential
+structure.
 
 The Decoder Robustness Index introduced here provides the first
 systematic framework for evaluating the reliability of cetacean
@@ -553,27 +629,44 @@ embeddings rather than ICI point clouds---is a natural next step that
 could reveal additional structure invisible to timing-based
 representations.
 %
-The DRI measurements use a nearest-centroid ICI decoder to illustrate
-the framework. While this suffices to demonstrate the methodology,
-modern cetacean decoders increasingly employ deep learning architectures.
-The DRI is designed as a \emph{general-purpose} robustness framework:
-its parametric transforms, graduated semantic distance, and compositional
-chain analysis are decoder-agnostic and can evaluate any model that maps
-acoustic input to coda classifications. Applying the DRI to
-state-of-the-art models such as WhAM~\citep{Paradise2025} would yield a
-more ecologically meaningful robustness benchmark and is a priority for
-future work.
+The boundary asymmetry and perturbation-discovery results are currently
+validated on a single nearest-centroid decoder. Because these findings
+characterise the decoder's decision boundaries, they may reflect biases
+in the classification pipeline rather than structure in the whales'
+signal space. Replication across at least three decoder architectures
+(e.g., calibrated random forest, gradient-boosted classifier, and a
+deep model such as WhAM) is the most important next step; if asymmetry
+persists across decoders, it can be attributed to the signal space with
+greater confidence. The DRI framework is designed to be decoder-agnostic
+and can evaluate any model that maps acoustic input to coda
+classifications.
 %
-The channel capacity estimate of approximately 3.0 bits per coda
-reflects the number of well-separated rhythm types that remain
-distinguishable under realistic acoustic perturbation. This should be
-regarded as a conservative lower bound: the full combinatorial space
+The classification accuracy reported here uses a random 80/20 split in
+which codas from the same individual or recording session may appear in
+both training and test sets. This can inflate accuracy due to
+within-individual consistency. Grouped cross-validation
+(leave-one-whale-out or leave-one-session-out) would provide a more
+conservative and ecologically meaningful estimate.
+%
+The statistical universals (Menzerath's law, turn-taking latencies) are
+reported with simple correlations and KS tests. With $n = 8{,}719$
+codas, even small effects achieve extreme significance; we have reported
+effect sizes throughout to aid interpretation. Hierarchical models with
+random intercepts for whale and session would account for
+pseudo-replication and are a priority for follow-up analysis.
+%
+The lower bound of 3.0 bits of decodable information per coda reflects
+the number of well-separated rhythm types that remain distinguishable
+under realistic acoustic perturbation. The full combinatorial space
 includes tempo (5 types), rubato (3 types), and ornamentation (2
 types) in addition to rhythm, yielding up to $\log_2(540) \approx 9.1$
 bits if all features are independently decodable. The gap between our
 empirical 3.0-bit estimate and the theoretical 9.1-bit ceiling
 quantifies the information carried by sub-rhythm features and
-represents a concrete target for future decoder development.
+represents a concrete target for future decoder development. Computing
+a proper information-theoretic channel capacity---$I(\text{true};
+\text{decoded})$ under a realistic perturbation distribution with
+confidence intervals---remains future work.
 
 \noindent\textbf{Future directions.}
 Three avenues are most promising. First, application of the geometric
@@ -628,7 +721,9 @@ learning rate annealing (500 epochs, initial LR $= 0.02$, minimum LR
 $= 10^{-4}$, cross-entropy loss). Euclidean baselines (logistic
 regression, $k$-NN with $k = 5$, random forest with 100 trees) were
 trained on the same standardised features with an 80/20 stratified
-train/test split.
+random split. We note that this split does not account for
+within-individual or within-session correlations; grouped
+cross-validation would provide a more conservative estimate.
 
 \subsection{Topological data analysis}
 For each coda type with $\geq 40$ samples, an ICI point cloud was
@@ -685,9 +780,13 @@ proportion of transitions correctly predicted by the most common
 successor (bigram) or most common successor given the preceding pair
 (trigram). Individual accents were tested via pairwise Kolmogorov--Smirnov
 tests on ICI distributions for whales with $\geq 10$ codas of the same
-type. Turn-taking was assessed by comparing inter-coda intervals for
+type, with Bonferroni correction for the number of pairwise comparisons.
+Turn-taking was assessed by comparing inter-coda intervals for
 same-whale versus cross-whale transitions within recording sessions,
-with significance assessed via Kolmogorov--Smirnov test.
+with significance assessed via Kolmogorov--Smirnov test. Effect sizes
+(KS $D$ statistic, latency ratio) are reported alongside $p$-values
+throughout, as the large sample size renders $p$-values alone
+uninformative.
 
 \subsection{Software}
 All analyses were implemented in the \texttt{eris-ketos} Python package
