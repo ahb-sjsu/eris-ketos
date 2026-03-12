@@ -324,9 +324,7 @@ class DecoderRobustnessIndex:
         """
         profile = {}
         for transform in self.transforms:
-            result = self.measure_single_transform(
-                decoder, signals, sr, transform, intensity=1.0
-            )
+            result = self.measure_single_transform(decoder, signals, sr, transform, intensity=1.0)
             profile[transform.name] = result.mean_omega
         return profile
 
@@ -364,9 +362,7 @@ class DecoderRobustnessIndex:
         for transform in self.transforms:
             transform_omegas = []
             for intensity in intensities:
-                result = self.measure_single_transform(
-                    decoder, signals, sr, transform, intensity
-                )
+                result = self.measure_single_transform(decoder, signals, sr, transform, intensity)
                 transform_omegas.extend(result.omegas)
 
             per_transform[transform.name] = float(np.mean(transform_omegas))
@@ -398,9 +394,7 @@ class DecoderRobustnessIndex:
         adversarial = {}
         if signals:
             for transform in self.transforms:
-                threshold = self.find_adversarial_threshold(
-                    decoder, signals[0], sr, transform
-                )
+                threshold = self.find_adversarial_threshold(decoder, signals[0], sr, transform)
                 adversarial[transform.name] = threshold
 
         # Compute DRI (Bond Index formula)
