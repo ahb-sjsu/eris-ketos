@@ -48,7 +48,7 @@ from the Dominica Sperm Whale Project. We show that: (1)~the hierarchical
 coda type taxonomy embeds with lower distortion in the Poincar\'e ball
 than in Euclidean space, consistent with tree-like combinatorial structure;
 (2)~persistent homology on inter-click interval point clouds reveals
-topologically distinct attractors per rhythm class;
+topologically distinct signatures per rhythm class;
 (3)~adversarial acoustic perturbations applied to a nearest-centroid
 decoder reveal asymmetric classification boundary crossings
 (mean asymmetry $= 0.87$); (4)~the coda system satisfies
@@ -118,7 +118,7 @@ In this work, we present five contributions:
     (Section~\ref{sec:poincare}).
 
     \item \textbf{Persistent homology} on ICI point clouds, revealing
-    topologically distinct attractors per rhythm class
+    topologically distinct signatures per rhythm class
     (Section~\ref{sec:tda}).
 
     \item \textbf{Decoder Robustness Index (DRI)}, the first adversarial
@@ -136,8 +136,10 @@ In this work, we present five contributions:
 \end{enumerate}
 
 All methods are implemented in the open-source \texttt{eris-ketos}
-Python package (\texttt{pip install eris-ketos}) and demonstrated on the
-full Dominica Sperm Whale Project (DSWP)
+Python package (v0.2.0;
+\href{https://github.com/ahb-sjsu/eris-ketos}{github.com/ahb-sjsu/eris-ketos};
+\href{https://pypi.org/project/eris-ketos/}{PyPI})
+and demonstrated on the full Dominica Sperm Whale Project (DSWP)
 dataset~\citep{Sharma2024}.
 
 % ===================================================================
@@ -249,25 +251,32 @@ Poincar\'e embeddings (figure~\ref{fig:classification}).
     \label{fig:classification}
 \end{figure}
 
-\subsection{Topological data analysis reveals distinct rhythm attractors}
+\subsection{Topological data analysis reveals distinct rhythm signatures}
 \label{sec:tda}
 
 For each coda type with $\geq 40$ samples, we constructed an ICI point
 cloud in $\mathbb{R}^9$ and computed Vietoris--Rips persistent homology
-up to dimension 1 using Ripser~\citep{Bauer2021,Tralie2018}. The
-resulting persistence diagrams (figure~\ref{fig:persistence}) revealed
-systematic differences across rhythm classes:
+up to dimension 1 using Ripser~\citep{Bauer2021,Tralie2018}. ICI
+vectors shorter than 9 elements were zero-filled to a common
+dimensionality; because zero-filling can introduce artificial structure
+in Euclidean distances, we verified that restricting analysis to
+full-length vectors (codas with $\geq 10$ clicks) produced qualitatively
+similar persistence diagrams. The resulting persistence diagrams
+(figure~\ref{fig:persistence}) revealed systematic topological
+differences across rhythm classes:
 
 \begin{itemize}
     \item \textbf{Regular codas} (xR) exhibited tight clusters with low
-    $H_1$ persistence, reflecting their temporally uniform ICI patterns.
+    $H_1$ persistence, consistent with their temporally uniform ICI
+    patterns.
 
     \item \textbf{Irregular codas} (xi) produced higher $H_1$
     persistence, indicating topological loops in the ICI space consistent
     with greater timing variability.
 
     \item \textbf{Compound codas} (x+y) showed elevated $H_0$
-    persistence, reflecting multi-component structure in the point cloud.
+    persistence, consistent with multi-component structure in the point
+    cloud.
 \end{itemize}
 
 These topological signatures are invariant to monotone transformations of
@@ -385,7 +394,12 @@ quantified within-unit versus between-unit clustering in both the
 Poincar\'e and Euclidean feature spaces. Codas from the same social
 unit formed tighter clusters on the Poincar\'e ball, consistent with
 the hypothesis that hyperbolic geometry captures hierarchical dialect
-structure that Euclidean representations attenuate.
+structure that Euclidean representations attenuate. We note, however,
+that social units differ in their coda type repertoire frequencies; the
+observed clustering may therefore reflect type composition rather than
+unit-level dialect variation per se. A stronger test would stratify by
+coda type (comparing within-type, between-unit distances) or regress
+out type identity and assess residual unit structure.
 
 \begin{figure}[H]
     \centering
@@ -493,19 +507,23 @@ intercepts for whale and recording session would provide a more rigorous
 test by accounting for pseudo-replication; we report the simple
 correlation here as a first-order confirmation.
 
-\subsubsection*{Zipf's law}
-The rank-frequency distribution of coda types followed a power law with
-exponent $\alpha = 1.44$, steeper than the $\alpha \approx 1.0$ typical
-of human language, indicating a more skewed distribution dominated by a
-few high-frequency types (1+1+3, 5R1, 5R3). We note that power-law
-claims over 28 types require caution: with such limited support,
-alternative distributions (e.g., log-normal) may fit comparably. A
-formal model-comparison approach following \citet{Youngblood2025} would
-strengthen this finding; we report the fitted exponent as a descriptive
-summary. Zipf's law of abbreviation (negative correlation between
-frequency and duration) was not statistically significant at the type
-level ($r = -0.129$, $p = 0.50$), likely reflecting the small number of
-distinct types rather than an absence of the effect.
+\subsubsection*{Rank-frequency distribution}
+The rank-frequency distribution of coda types was well-described by a
+power-law function with fitted exponent $\alpha = 1.44$ (nonlinear
+least-squares on ranks), steeper than the $\alpha \approx 1.0$ typical
+of human language and indicating a skewed distribution dominated by a
+few high-frequency types (1+1+3, 5R1, 5R3). We emphasise that this fit
+is \emph{descriptive}: with only 28 distinct types, formal power-law
+testing (e.g., MLE with Kolmogorov--Smirnov goodness-of-fit and
+comparison against log-normal alternatives, as in
+\citealt{Youngblood2025}) lacks statistical power, and we do not claim
+the distribution is a true power law. The Zipf-like skew is nonetheless
+consistent with frequency-dependent selection pressures reported
+across cetacean species. Zipf's law of abbreviation (negative
+correlation between frequency and duration) was not statistically
+significant at the type level ($r = -0.129$, $p = 0.50$), likely
+reflecting the small number of distinct types rather than an absence of
+the effect.
 
 \subsubsection*{Sequential structure}
 Coda exchanges exhibited first-order Markov dependencies: the mutual
@@ -667,6 +685,15 @@ represents a concrete target for future decoder development. Computing
 a proper information-theoretic channel capacity---$I(\text{true};
 \text{decoded})$ under a realistic perturbation distribution with
 confidence intervals---remains future work.
+%
+The DRI and perturbation-discovery analyses use synthesised coda
+waveforms (Gaussian-enveloped click trains); robustness findings
+therefore characterise robustness-to-perturbation-of-the-synthesis-model
+rather than robustness under real ocean acoustics. Raw DSWP audio is
+publicly available~\citep{Sharma2024} and a validation run on real
+recordings---even a small subset---would substantially strengthen the
+ecological validity of the transform sensitivity ranking. We prioritise
+this for follow-up work.
 
 \noindent\textbf{Future directions.}
 Three avenues are most promising. First, application of the geometric
@@ -740,7 +767,7 @@ Mel spectrograms ($n_\mathrm{mels} = 64$, FFT size $= 1024$,
 hop $= 256$) were computed from synthesised coda signals. Spectrograms
 were partitioned into 8 frequency bands, and band-wise covariance
 matrices were computed over sliding windows. The log-Euclidean
-metric~\citep{Carlsson2009} on the SPD manifold was used to compute
+metric~\citep{Arsigny2007} on the SPD manifold was used to compute
 pairwise distances and extract features via eigenvalue decomposition of
 the matrix logarithm.
 
@@ -755,11 +782,34 @@ the signal is unchanged. Four transforms (amplitude scale, time shift,
 additive noise, pink noise) are designated as invariant (a correct
 decoder should tolerate them); five are designated as stress transforms.
 
-The DRI was computed as $\text{DRI} = 0.5 \cdot \bar{\omega} + 0.3
-\cdot \omega_{75} + 0.2 \cdot \omega_{95}$, where $\omega$ is the
-graduated semantic distance between baseline and perturbed
-classifications. Adversarial thresholds were found via binary search for
-the minimal intensity causing a classification flip (tolerance $= 0.01$).
+For each perturbed signal, the graduated semantic distance $\omega$ is
+defined as:
+\[
+\omega(y, \hat{y}) =
+\begin{cases}
+0 & \text{if } y = \hat{y}, \\
+\max\!\bigl(0.5,\; 0.5 + 0.5 \cdot \sum_{f} w_f \cdot
+\mathbf{1}[y_f \neq \hat{y}_f] \big/ \sum_{f} w_f\bigr) &
+\text{otherwise},
+\end{cases}
+\]
+where $y$ and $\hat{y}$ are the baseline and perturbed decoder
+predictions, the sum ranges over combinatorial features
+$f \in \{\text{rhythm}, \text{tempo}, \text{rubato},
+\text{ornamentation}\}$, and $w_f$ are importance weights ($w_\text{rhythm}
+= 1.0$, $w_\text{tempo} = 0.7$, $w_\text{rubato} = 0.4$,
+$w_\text{ornamentation} = 0.2$). The minimum penalty of 0.5 ensures
+that any classification flip is registered.
+
+The scalar DRI aggregates $\omega$ values across all
+transform--intensity--signal combinations:
+$\text{DRI} = 0.5 \cdot \bar{\omega} + 0.3 \cdot \omega_{75} + 0.2
+\cdot \omega_{95}$. The weights (0.5/0.3/0.2) follow the Bond Index
+convention, emphasising tail behaviour; we verified that results are
+qualitatively stable across a range of weight triples (e.g.,
+equal-weighted, 0.4/0.4/0.2, 0.6/0.2/0.2). Adversarial thresholds were
+found via binary search for the minimal intensity causing a
+classification flip (tolerance $= 0.01$).
 Transform chains of length 1--2 were randomly generated for
 compositional robustness testing.
 
@@ -790,11 +840,14 @@ uninformative.
 
 \subsection{Software}
 All analyses were implemented in the \texttt{eris-ketos} Python package
-(v0.1.0), available on
-\href{https://pypi.org/project/eris-ketos/}{PyPI} and
-\href{https://github.com/ahb-sjsu/eris-ketos}{GitHub}. The package depends on
-NumPy, PyTorch, scikit-learn, Ripser, and librosa. A self-contained
-Jupyter notebook reproducing all results is included in the repository.
+(v0.2.0), available on
+\href{https://pypi.org/project/eris-ketos/0.2.0/}{PyPI} and
+\href{https://github.com/ahb-sjsu/eris-ketos}{GitHub}. The package
+depends on NumPy, PyTorch, scikit-learn, Ripser, and librosa. A
+self-contained Jupyter notebook reproducing all figures and statistical
+results is included in the repository
+(\texttt{notebooks/cetacean\_geometric\_analysis.py}, Jupytext percent
+format).
 
 % ===================================================================
 \section*{Data availability}
