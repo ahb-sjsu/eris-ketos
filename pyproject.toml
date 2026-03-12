@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "eris-ketos"
-version = "0.1.0"
+version = "0.2.0"
 description = "Geometric analysis of cetacean communication — hyperbolic embeddings, topological data analysis, and adversarial robustness testing for whale vocalization decoding"
 readme = "README.md"
 license = "MIT"
