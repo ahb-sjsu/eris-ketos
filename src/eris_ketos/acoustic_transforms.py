@@ -89,7 +89,7 @@ class TransformChain:
         self.name = " -> ".join(f"{t.name}@{i:.1f}" for t, i in transforms)
 
     def __call__(self, signal: np.ndarray, sr: int = 32000) -> np.ndarray:
-        result = signal.copy()
+        result: np.ndarray = signal.copy()
         for transform, intensity in self.transforms:
             result = transform(result, sr, intensity)
         return result
@@ -147,7 +147,8 @@ def _additive_noise(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray
     noise_rms = rms / (10 ** (snr_db / 20))
     rng = np.random.RandomState(hash(("noise", signal.shape[0], intensity)) % 2**31)
     noise = rng.randn(len(signal)).astype(signal.dtype) * noise_rms
-    return signal + noise
+    result: np.ndarray = signal + noise
+    return result
 
 
 def _pink_noise(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
@@ -165,7 +166,8 @@ def _pink_noise(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
     pink = pink - np.convolve(pink, np.ones(64) / 64, mode="same")
     pink_rms = np.sqrt(np.mean(pink**2)) + 1e-10
     pink = (pink / pink_rms * noise_rms).astype(signal.dtype)
-    return signal + pink
+    result: np.ndarray = signal + pink
+    return result
 
 
 def _doppler_shift(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
@@ -193,7 +195,8 @@ def _doppler_shift(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
     else:
         resampled = resampled[: len(signal)]
 
-    return resampled.astype(signal.dtype)
+    result: np.ndarray = resampled.astype(signal.dtype)
+    return result
 
 
 def _multipath_echo(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
@@ -211,7 +214,8 @@ def _multipath_echo(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray
 
     echo = np.zeros_like(signal)
     echo[delay_samples:] = signal[:-delay_samples] * attenuation
-    return signal + echo
+    result: np.ndarray = signal + echo
+    return result
 
 
 def _amplitude_scale(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
@@ -224,7 +228,8 @@ def _amplitude_scale(signal: np.ndarray, sr: int, intensity: float) -> np.ndarra
     rng = np.random.RandomState(hash(("amp", signal.shape[0], intensity)) % 2**31)
     log_scale = rng.uniform(-intensity * 1.0, intensity * 1.0)
     factor = 10**log_scale
-    return (signal * factor).astype(signal.dtype)
+    result: np.ndarray = (signal * factor).astype(signal.dtype)
+    return result
 
 
 def _time_stretch(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
@@ -248,7 +253,8 @@ def _time_stretch(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
     else:
         stretched = stretched[: len(signal)]
 
-    return stretched.astype(signal.dtype)
+    result: np.ndarray = stretched.astype(signal.dtype)
+    return result
 
 
 def _spectral_mask(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
@@ -268,7 +274,8 @@ def _spectral_mask(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
     start = rng.randint(0, max(1, n_freq - mask_width))
     spectrum[start : start + mask_width] = 0
 
-    return np.fft.irfft(spectrum, n=len(signal)).astype(signal.dtype)
+    result: np.ndarray = np.fft.irfft(spectrum, n=len(signal)).astype(signal.dtype)
+    return result
 
 
 def _click_dropout(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
@@ -278,7 +285,7 @@ def _click_dropout(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
     """
     if intensity <= 0:
         return signal
-    result = signal.copy()
+    result: np.ndarray = signal.copy()
     rng = np.random.RandomState(hash(("dropout", signal.shape[0], intensity)) % 2**31)
     n_drops = max(1, int(10 * intensity))
     drop_len = int(len(signal) * 0.03 * intensity)
@@ -300,7 +307,8 @@ def _time_shift(signal: np.ndarray, sr: int, intensity: float) -> np.ndarray:
     rng = np.random.RandomState(hash(("shift", signal.shape[0], intensity)) % 2**31)
     max_shift = int(len(signal) * 0.25 * intensity)
     shift = rng.randint(-max_shift, max_shift + 1) if max_shift > 0 else 0
-    return np.roll(signal, shift).astype(signal.dtype)
+    result: np.ndarray = np.roll(signal, shift).astype(signal.dtype)
+    return result
 
 
 # =============================================================================

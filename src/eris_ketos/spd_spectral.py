@@ -54,7 +54,8 @@ class SPDManifold:
         """
         eigvals, eigvecs = torch.linalg.eigh(S)
         eigvals = eigvals.clamp_min(1e-10)
-        return eigvecs @ torch.diag_embed(eigvals.log()) @ eigvecs.transpose(-2, -1)
+        result: torch.Tensor = eigvecs @ torch.diag_embed(eigvals.log()) @ eigvecs.transpose(-2, -1)
+        return result
 
     @staticmethod
     def exp_map(X: torch.Tensor) -> torch.Tensor:
@@ -67,7 +68,8 @@ class SPDManifold:
             SPD matrix, shape [..., n, n].
         """
         eigvals, eigvecs = torch.linalg.eigh(X)
-        return eigvecs @ torch.diag_embed(eigvals.exp()) @ eigvecs.transpose(-2, -1)
+        result: torch.Tensor = eigvecs @ torch.diag_embed(eigvals.exp()) @ eigvecs.transpose(-2, -1)
+        return result
 
     @staticmethod
     def distance(S1: torch.Tensor, S2: torch.Tensor) -> torch.Tensor:
@@ -82,7 +84,8 @@ class SPDManifold:
             Distance scalar or batch, shape [...].
         """
         log_diff = SPDManifold.log_map(S1) - SPDManifold.log_map(S2)
-        return torch.norm(log_diff.flatten(-2), dim=-1)
+        result: torch.Tensor = torch.norm(log_diff.flatten(-2), dim=-1)
+        return result
 
     @staticmethod
     def frechet_mean(
@@ -147,7 +150,8 @@ def compute_covariance(
     # Regularize for PD guarantee
     cov += regularize * np.eye(n_bands)
 
-    return cov
+    result: np.ndarray = cov
+    return result
 
 
 def spd_features_from_spectrogram(
@@ -177,7 +181,8 @@ def spd_features_from_spectrogram(
 
     # Upper triangle
     idx = np.triu_indices(n_bands)
-    return log_cov[idx].astype(np.float32)
+    result: np.ndarray = log_cov[idx].astype(np.float32)
+    return result
 
 
 # =============================================================================

@@ -63,7 +63,8 @@ class PoincareBall:
         log_0(y) = arctanh(√c ||y||) · y / (√c ||y||)
         """
         y_norm = y.norm(dim=-1, keepdim=True).clamp(1e-15, (1 / self.sqrt_c) - 1e-5)
-        return torch.arctanh(self.sqrt_c * y_norm) * y / (self.sqrt_c * y_norm)
+        result: torch.Tensor = torch.arctanh(self.sqrt_c * y_norm) * y / (self.sqrt_c * y_norm)
+        return result
 
     def mobius_add(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """Möbius addition: the hyperbolic analogue of vector addition.
@@ -86,12 +87,14 @@ class PoincareBall:
         neg_x = -x
         add_result = self.mobius_add(neg_x, y)
         norm = add_result.norm(dim=-1).clamp(max=(1 / self.sqrt_c) - 1e-5)
-        return (2.0 / self.sqrt_c) * torch.arctanh(self.sqrt_c * norm)
+        result: torch.Tensor = (2.0 / self.sqrt_c) * torch.arctanh(self.sqrt_c * norm)
+        return result
 
     def dist_to_origin(self, x: torch.Tensor) -> torch.Tensor:
         """Distance from x to the origin (cheaper than general dist)."""
         x_norm = x.norm(dim=-1).clamp(1e-15, (1 / self.sqrt_c) - 1e-5)
-        return (2.0 / self.sqrt_c) * torch.arctanh(self.sqrt_c * x_norm)
+        result: torch.Tensor = (2.0 / self.sqrt_c) * torch.arctanh(self.sqrt_c * x_norm)
+        return result
 
     def midpoint(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
         """Einstein midpoint of two points on the ball."""

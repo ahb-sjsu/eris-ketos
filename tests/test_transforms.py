@@ -105,17 +105,13 @@ class TestTransformChain:
         assert "@0.7" in chain.name
 
     def test_generate_chains(self, transforms: list[AcousticTransform]) -> None:
-        chains = TransformChain.generate_chains(
-            transforms, max_length=2, n_chains=10, seed=42
-        )
+        chains = TransformChain.generate_chains(transforms, max_length=2, n_chains=10, seed=42)
         assert len(chains) == 10
         for chain in chains:
             assert len(chain.transforms) >= 1
             assert len(chain.transforms) <= 2
 
-    def test_generate_chains_reproducible(
-        self, transforms: list[AcousticTransform]
-    ) -> None:
+    def test_generate_chains_reproducible(self, transforms: list[AcousticTransform]) -> None:
         c1 = TransformChain.generate_chains(transforms, n_chains=5, seed=42)
         c2 = TransformChain.generate_chains(transforms, n_chains=5, seed=42)
         for a, b in zip(c1, c2, strict=True):

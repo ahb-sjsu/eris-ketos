@@ -103,9 +103,7 @@ class TestSPDFeatures:
 class TestSpectralTrajectory:
     def test_trajectory_shape(self) -> None:
         spec = np.random.randn(128, 200)
-        traj = compute_spectral_trajectory(
-            spec, n_bands=8, window_frames=32, hop_frames=16
-        )
+        traj = compute_spectral_trajectory(spec, n_bands=8, window_frames=32, hop_frames=16)
         assert traj.matrices.shape[1] == 8
         assert traj.matrices.shape[2] == 8
         assert len(traj.timestamps) == len(traj.matrices)

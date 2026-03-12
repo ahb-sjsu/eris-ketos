@@ -90,9 +90,7 @@ class TestPersistence:
     def test_missing_ripser_import(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Should raise ImportError with helpful message if ripser not installed."""
 
-        orig = (
-            __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
-        )
+        orig = __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
 
         def mock_import(name, *args, **kwargs):
             if name == "ripser":
