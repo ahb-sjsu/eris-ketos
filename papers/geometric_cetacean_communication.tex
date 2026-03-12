@@ -44,9 +44,10 @@ Recent work has revealed that sperm whale (\textit{Physeter macrocephalus})
 codas possess a combinatorial phonetic structure comparable in complexity
 to human phonological systems. We apply differential geometry, algebraic
 topology, and adversarial robustness testing to 8{,}719 annotated codas
-from the Dominica Sperm Whale Project. We show that: (1)~the hierarchical
-coda type taxonomy embeds with lower distortion in the Poincar\'e ball
-than in Euclidean space, consistent with tree-like combinatorial structure;
+from the Dominica Sperm Whale Project. We show that: (1)~the hierarchical coda type taxonomy admits a natural Poincar\'e ball
+embedding that provides interpretable visualisation of the tree-like
+combinatorial structure, with classification accuracy competitive with
+Euclidean baselines;
 (2)~persistent homology on inter-click interval point clouds reveals
 topologically distinct signatures per rhythm class;
 (3)~adversarial acoustic perturbations applied to a nearest-centroid
@@ -114,7 +115,8 @@ In this work, we present five contributions:
 
 \begin{enumerate}
     \item \textbf{Poincar\'e ball embedding} of the coda type hierarchy,
-    with quantitative distortion comparison against Euclidean baselines
+    with distortion comparison against Euclidean baselines (PCA, MDS,
+    Isomap) and assessment of practical advantages
     (Section~\ref{sec:poincare}).
 
     \item \textbf{Persistent homology} on ICI point clouds, revealing
@@ -174,41 +176,55 @@ ordered entries across 11 identified whales.
 We parsed the 28 coda types into a three-level taxonomy (rhythm
 class $\to$ click count $\to$ variant) and constructed a taxonomic
 distance matrix (see Methods). Because this taxonomy is tree-like by
-construction, hyperbolic space is expected to embed it with lower
-distortion than Euclidean space~\citep{Sarkar2011}; our aim is to
-quantify the magnitude of this advantage and assess whether it transfers
-to downstream classification.
+construction, hyperbolic space is theoretically expected to embed it with
+lower distortion than Euclidean space~\citep{Sarkar2011}; our aim is to
+test this prediction and assess whether hyperbolic representations offer
+practical advantages for this dataset.
 
 Coda types were embedded into a $d$-dimensional Poincar\'e ball
 ($d = \min(16, n_\mathrm{types})$) via gradient descent on a distortion
-loss, and compared against Euclidean embedding via PCA on the same
-distance matrix (figure~\ref{fig:poincare}).
+loss, and compared against three Euclidean baselines: PCA on the
+distance matrix, classical multidimensional scaling (MDS), and Isomap
+(figure~\ref{fig:poincare}).
 
-The Poincar\'e embedding achieved higher Spearman rank correlation
-($\rho$) between embedded pairwise distances and true taxonomic
-distances than the Euclidean baseline (figure~\ref{fig:distortion}).
-This result is consistent with theory and supports the \emph{suitability}
-of hyperbolic representations for the coda hierarchy; it does not by
-itself demonstrate that the whales' internal representation is
-hyperbolic. Stronger evidence would require showing that hyperbolic
-embeddings outperform Euclidean methods optimised for the same
-distortion objective (e.g., multidimensional scaling or Isomap), and
-that the advantage diminishes under randomised taxonomy controls---both
-are natural targets for future work.
+In terms of distance preservation (Spearman $\rho$ between embedded and
+true taxonomic distances), classical MDS achieved the highest rank
+correlation ($\rho = 0.79$), followed by Isomap ($\rho = 0.77$) and PCA
+($\rho = 0.79$), while the Poincar\'e embedding achieved lower
+$\rho$ (figure~\ref{fig:distortion}). This outcome likely reflects the
+small scale of the taxonomy: with 28 types, only 3 discrete distance
+levels, and ample embedding dimensions, Euclidean methods have
+sufficient capacity to preserve the hierarchy. The theoretical
+$O(\log n)$ distortion advantage of hyperbolic
+space~\citep{Sarkar2011} is expected to manifest more clearly for larger,
+deeper trees (e.g., the full 540-configuration combinatorial space).
+
+The Poincar\'e ball nonetheless offers two practical advantages.
+First, it provides a natural \emph{interpretable visualisation}: on the
+disk, hierarchically related types (e.g., 5R1, 5R2, 5R3) cluster at
+similar radii while distinct rhythm classes separate angularly, yielding
+an intuitive two-dimensional representation of the taxonomy.
+Second, the HyperbolicMLR classifier initialised from Poincar\'e
+prototypes achieved classification accuracy competitive with Euclidean
+baselines (see below), suggesting that even without a distortion
+advantage, the hyperbolic representation is a viable and interpretable
+alternative for downstream tasks.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{fig2_poincare_vs_euclidean.png}
     \caption{%
-        \textbf{Poincar\'e ball versus Euclidean embedding of coda type
-        hierarchy.}
+        \textbf{Poincar\'e ball versus Euclidean embeddings of the coda
+        type hierarchy.}
         (\textit{Left}) Poincar\'e ball embedding: the unit disk boundary
         represents the ideal boundary of hyperbolic space. Coda types are
-        coloured by rhythm class. Note that hierarchically related types
+        coloured by rhythm class. Hierarchically related types
         (e.g., 5R1, 5R2, 5R3) cluster at similar radii while distinct
-        rhythm classes separate angularly.
+        rhythm classes separate angularly, providing an interpretable
+        two-dimensional visualisation.
         (\textit{Right}) Euclidean PCA embedding of the same distance
-        matrix for comparison.
+        matrix. Classical MDS and Isomap (not shown) achieve comparable
+        layouts.
     }
     \label{fig:poincare}
 \end{figure}
@@ -220,8 +236,10 @@ are natural targets for future work.
         \textbf{Distortion analysis.}
         Embedded pairwise distances versus true taxonomic distances for
         (\textit{left}) Poincar\'e ball and (\textit{right}) Euclidean PCA.
-        Spearman rank correlations are reported in each panel. Higher
-        $\rho$ indicates better preservation of the taxonomic hierarchy.
+        Spearman rank correlations are reported in each panel. Classical
+        MDS achieves $\rho = 0.79$, outperforming the Poincar\'e
+        embedding on distance preservation for this 28-type taxonomy
+        (see text).
     }
     \label{fig:distortion}
 \end{figure}
@@ -438,10 +456,10 @@ The transition matrix of decoder misclassifications revealed a mean
 boundary asymmetry of 0.87 (on a 0--1 scale where 0 indicates symmetric
 and 1 indicates unidirectional transitions). For example, perturbation
 of 5R3 codas caused misclassification as 4R2 in 223 instances, while
-the reverse (4R2 $\to$ 5R3) occurred 0 times. This asymmetry exhibits a
-formal similarity to directional chain shifts observed in human
-phonology, in that perturbation-induced transitions favour specific
-directions. However, we note that this finding characterises the
+the reverse (4R2 $\to$ 5R3) occurred 0 times. This strong directionality
+indicates that the decoder's decision boundaries are not symmetrically
+positioned between type centroids. However, we note that this
+finding characterises the
 \emph{decision boundaries of the decoder}, not necessarily the whales'
 perceptual space. Replication across multiple decoders (e.g., calibrated
 random forest, gradient-boosted classifier, or a deep learning model
@@ -580,22 +598,25 @@ types~\citep{Gero2016,Hersh2022}.
 \section{Discussion}
 
 The results presented here demonstrate that geometric and topological
-methods reveal structure in cetacean communication that standard
-Euclidean analyses fail to capture. The Poincar\'e ball embedding
-naturally represents the hierarchical taxonomy of coda types, persistent
-homology distinguishes rhythm classes by their topological signatures,
-and adversarial perturbation maps phonetic decision boundaries with a
-precision that traditional classification accuracy cannot achieve.
+methods offer complementary perspectives on cetacean communication
+structure. The Poincar\'e ball embedding provides an interpretable
+representation of the coda type hierarchy, though classical MDS achieves
+superior distance preservation at this scale (28 types, 3 distance
+levels); the theoretical distortion advantage of hyperbolic geometry is
+expected to become relevant for larger taxonomies (e.g., the full
+540-configuration combinatorial space). Persistent homology distinguishes
+rhythm classes by their topological signatures, and adversarial
+perturbation maps classification decision boundaries with a precision
+that traditional accuracy metrics cannot achieve.
 
 The highly asymmetric classification boundaries (mean asymmetry
 $= 0.87$) are a notable finding, though their interpretation requires
 care. The asymmetry characterises the \emph{decoder's decision
 boundaries}: perturbation-induced misclassifications are strongly
 directional, with certain type pairs exhibiting hundreds of transitions
-in one direction and zero in the reverse. While this pattern exhibits a
-formal similarity to directional chain shifts in human phonology, we
-cannot at present determine whether the asymmetry reflects structure in
-the whales' signal space or biases in the nearest-centroid decoder.
+in one direction and zero in the reverse. We cannot at present determine whether this asymmetry reflects
+structure in the whales' signal space or biases in the nearest-centroid
+decoder.
 Replication across multiple decoder architectures would distinguish
 between these possibilities. If the asymmetry persists across decoders,
 it would constitute evidence that the coda combinatorial space possesses
@@ -730,9 +751,12 @@ two types first differ, yielding integer distances in $\{0, 1, 2, 3, 4\}$.
 Types were embedded into a Poincar\'e ball of curvature $c = 1.0$ and
 dimension $d = \min(16, n_\mathrm{types})$ via gradient descent
 minimising the mean squared error between embedded hyperbolic distances
-and normalised taxonomic distances. Euclidean baselines used PCA on the
-distance matrix. Distortion was quantified via Spearman rank correlation
-between true and embedded pairwise distances.
+and normalised taxonomic distances. Three Euclidean baselines were
+computed: PCA on the distance matrix, classical multidimensional scaling
+(MDS), and Isomap. MDS directly optimises distance preservation and is
+therefore the most appropriate Euclidean comparator. Distortion was
+quantified via Spearman rank correlation between true and embedded
+pairwise distances.
 
 \subsection{Classification}
 A Hyperbolic Multinomial Logistic Regression (HyperbolicMLR) classifier
