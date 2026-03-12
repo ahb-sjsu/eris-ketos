@@ -544,16 +544,36 @@ meaning.
 
 \noindent\textbf{Limitations.}
 The present analysis relies on ICI-based features from the annotated
-DSWP dataset. Extension to raw acoustic features---including the
-vowel-like spectral patterns reported by \citet{Begus2025}---would
-require waveform-level analysis with real recordings. The DRI
-measurements use a simple nearest-centroid decoder; evaluation of more
-sophisticated models such as WhAM~\citep{Paradise2025} would provide a
-more ecologically meaningful robustness benchmark. The channel capacity
-estimate of 3.0 bits per coda is based on the number of
-well-separated types under perturbation and should be regarded as a
-lower bound on the true capacity of the multi-feature combinatorial
-system.
+DSWP dataset. Because recent work has identified vowel-like spectral
+patterns within individual clicks~\citep{Begus2025}, ICI features alone
+may not capture the full phonetic dimensionality of the coda system.
+Integrating raw acoustic waveforms into the topological framework---for
+instance, by computing persistent homology on spectral time-delay
+embeddings rather than ICI point clouds---is a natural next step that
+could reveal additional structure invisible to timing-based
+representations.
+%
+The DRI measurements use a nearest-centroid ICI decoder to illustrate
+the framework. While this suffices to demonstrate the methodology,
+modern cetacean decoders increasingly employ deep learning architectures.
+The DRI is designed as a \emph{general-purpose} robustness framework:
+its parametric transforms, graduated semantic distance, and compositional
+chain analysis are decoder-agnostic and can evaluate any model that maps
+acoustic input to coda classifications. Applying the DRI to
+state-of-the-art models such as WhAM~\citep{Paradise2025} would yield a
+more ecologically meaningful robustness benchmark and is a priority for
+future work.
+%
+The channel capacity estimate of approximately 3.0 bits per coda
+reflects the number of well-separated rhythm types that remain
+distinguishable under realistic acoustic perturbation. This should be
+regarded as a conservative lower bound: the full combinatorial space
+includes tempo (5 types), rubato (3 types), and ornamentation (2
+types) in addition to rhythm, yielding up to $\log_2(540) \approx 9.1$
+bits if all features are independently decodable. The gap between our
+empirical 3.0-bit estimate and the theoretical 9.1-bit ceiling
+quantifies the information carried by sub-rhythm features and
+represents a concrete target for future decoder development.
 
 \noindent\textbf{Future directions.}
 Three avenues are most promising. First, application of the geometric
