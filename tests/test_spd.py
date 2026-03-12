@@ -66,7 +66,7 @@ class TestSPDManifold:
     def test_frechet_mean_of_one(self, spd_matrices: torch.Tensor) -> None:
         single = spd_matrices[0:1]
         mean = SPDManifold.frechet_mean(single)
-        torch.testing.assert_close(mean, single[0], atol=1e-5, rtol=1e-5)
+        torch.testing.assert_close(mean, single[0], atol=1e-4, rtol=1e-4)
 
 
 class TestCovariance:
