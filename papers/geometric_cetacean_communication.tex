@@ -6,10 +6,15 @@
 % Alternative targets: Bioacoustics, PLOS ONE, JASA, NeurIPS workshop
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage[english]{babel}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{hyperref}
+\usepackage[pdfauthor={Andrew H. Bond},
+            pdftitle={Geometric Structure in Sperm Whale Communication},
+            pdfsubject={Computational bioacoustics, hyperbolic embeddings, TDA},
+            pdfkeywords={sperm whale, Poincare embedding, persistent homology, adversarial robustness},
+            pdflang={en}]{hyperref}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{natbib}
 \usepackage{xcolor}
@@ -17,7 +22,10 @@
 \usepackage{subcaption}
 \usepackage{authblk}
 \usepackage{lineno}
+\usepackage{float}
 \linenumbers
+
+\graphicspath{{figures/}}
 
 % --- Title ---
 \title{Geometric Structure in Sperm Whale Communication:\\
@@ -107,22 +115,25 @@ In this work, we present five contributions:
 
 \begin{enumerate}
     \item \textbf{Poincar\'e ball embedding} of the coda type hierarchy,
-    with quantitative distortion comparison against Euclidean baselines.
+    with quantitative distortion comparison against Euclidean baselines
+    (Section~\ref{sec:poincare}).
 
     \item \textbf{Persistent homology} on ICI point clouds, revealing
-    topologically distinct attractors per rhythm class.
+    topologically distinct attractors per rhythm class
+    (Section~\ref{sec:tda}).
 
     \item \textbf{Decoder Robustness Index (DRI)}, the first adversarial
-    robustness benchmark for cetacean communication decoders, adapted
-    from the Bond Index framework for ethical AI evaluation.
+    robustness benchmark for cetacean communication decoders
+    (Section~\ref{sec:dri}).
 
     \item \textbf{Adversarial perturbation as a discovery tool},
     revealing asymmetric phonetic boundaries and empirically estimating
-    channel capacity at approximately 3.0 bits per coda.
+    channel capacity at approximately 3.0 bits per coda
+    (Section~\ref{sec:fuzz}).
 
     \item \textbf{Linguistic universals}, confirming Menzerath's law,
     higher-order Markov structure, individual accents, and active
-    turn-taking in coda exchanges.
+    turn-taking in coda exchanges (Section~\ref{sec:linguistic}).
 \end{enumerate}
 
 All methods are implemented in the open-source \texttt{eris-ketos}
@@ -133,31 +144,103 @@ dataset~\citep{Sharma2024}.
 % ===================================================================
 \section{Results}
 
-\subsection{Poincar\'e ball embedding captures hierarchical structure}
+\subsection{Dataset overview}
 
-We parsed the 28 coda types in the DSWP dataset into a three-level
-taxonomy (rhythm class $\to$ click count $\to$ variant) and constructed
-a taxonomic distance matrix. Coda types were embedded into a
+The DSWP dataset comprises 8{,}719 annotated codas spanning 28 coda
+types, with click counts ranging from 3 to 10 (figure~\ref{fig:overview}).
+The three most frequent types---1+1+3, 5R1, and 5R3---account for
+approximately 50\% of all codas. Coda types decompose into four rhythm
+classes: regular (xR), deceleration (xD), irregular (xi), and compound
+(x+y). The exchange-level dialogues dataset provides 3{,}840 sequentially
+ordered entries across 11 identified whales.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig1_data_overview.png}
+    \caption{%
+        \textbf{Dataset overview.}
+        (\textit{Left}) Distribution of the 20 most frequent coda types in the
+        DSWP dataset. The compound type 1+1+3 and regular types 5R1, 5R3
+        dominate. (\textit{Right}) Click count histogram; the majority of
+        codas contain 4--6 clicks.
+    }
+    \label{fig:overview}
+\end{figure}
+
+\subsection{Poincar\'e ball embedding captures hierarchical structure}
+\label{sec:poincare}
+
+We parsed the 28 coda types into a three-level taxonomy (rhythm
+class $\to$ click count $\to$ variant) and constructed a taxonomic
+distance matrix (see Methods). Coda types were embedded into a
 $d$-dimensional Poincar\'e ball ($d = \min(16, n_\mathrm{types})$) via
 gradient descent on a distortion loss, and compared against Euclidean
-embedding via PCA on the same distance matrix (Fig.~\ref{fig:poincare}).
+embedding via PCA on the same distance matrix (figure~\ref{fig:poincare}).
 
 The Poincar\'e embedding achieved higher Spearman rank correlation
 ($\rho$) between embedded pairwise distances and true taxonomic
-distances than the Euclidean baseline, consistent with the theoretical
-advantage of hyperbolic geometry for tree-like structures. A Hyperbolic
-Multinomial Logistic Regression classifier trained on individual coda
-feature vectors (9 normalised ICI features, log-duration, click count)
-achieved competitive classification accuracy against Euclidean baselines
-(logistic regression, $k$-nearest neighbours, random forest), with class
-prototypes initialised from the taxonomic Poincar\'e embeddings.
+distances than the Euclidean baseline (figure~\ref{fig:distortion}),
+consistent with the theoretical advantage of hyperbolic geometry for
+tree-like structures.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig2_poincare_vs_euclidean.png}
+    \caption{%
+        \textbf{Poincar\'e ball versus Euclidean embedding of coda type
+        hierarchy.}
+        (\textit{Left}) Poincar\'e ball embedding: the unit disk boundary
+        represents the ideal boundary of hyperbolic space. Coda types are
+        coloured by rhythm class. Note that hierarchically related types
+        (e.g., 5R1, 5R2, 5R3) cluster at similar radii while distinct
+        rhythm classes separate angularly.
+        (\textit{Right}) Euclidean PCA embedding of the same distance
+        matrix for comparison.
+    }
+    \label{fig:poincare}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig3_distortion_comparison.png}
+    \caption{%
+        \textbf{Distortion analysis.}
+        Embedded pairwise distances versus true taxonomic distances for
+        (\textit{left}) Poincar\'e ball and (\textit{right}) Euclidean PCA.
+        Spearman rank correlations are reported in each panel. Higher
+        $\rho$ indicates better preservation of the taxonomic hierarchy.
+    }
+    \label{fig:distortion}
+\end{figure}
+
+A Hyperbolic Multinomial Logistic Regression (HyperbolicMLR) classifier
+trained on individual coda feature vectors (9 normalised ICI features,
+log-duration, click count) achieved competitive classification accuracy
+against Euclidean baselines (logistic regression, $k$-nearest neighbours,
+random forest), with class prototypes initialised from the taxonomic
+Poincar\'e embeddings (figure~\ref{fig:classification}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig4_classification.png}
+    \caption{%
+        \textbf{Classification results.}
+        (\textit{Left}) Confusion matrix for the HyperbolicMLR classifier.
+        (\textit{Right}) Comparison of classification accuracy across
+        methods. All classifiers use the same 11-dimensional feature
+        representation (9 duration-normalised ICIs, log-duration,
+        normalised click count) with 80/20 train/test split.
+    }
+    \label{fig:classification}
+\end{figure}
 
 \subsection{Topological data analysis reveals distinct rhythm attractors}
+\label{sec:tda}
 
 For each coda type with $\geq 40$ samples, we constructed an ICI point
 cloud in $\mathbb{R}^9$ and computed Vietoris--Rips persistent homology
 up to dimension 1 using Ripser~\citep{Bauer2021,Tralie2018}. The
-resulting persistence diagrams (Fig.~\ref{fig:tda}) revealed
+resulting persistence diagrams (figure~\ref{fig:persistence}) revealed
 systematic differences across rhythm classes:
 
 \begin{itemize}
@@ -169,22 +252,130 @@ systematic differences across rhythm classes:
     with greater timing variability.
 
     \item \textbf{Compound codas} (x+y) showed elevated $H_0$
-    persistence, reflecting multi-component structure.
+    persistence, reflecting multi-component structure in the point cloud.
 \end{itemize}
 
 These topological signatures are invariant to monotone transformations of
 the distance metric and thus capture structural properties that
 Euclidean summary statistics cannot.
 
-\subsection{Adversarial perturbation maps phonetic boundaries}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig5_persistence_diagrams.png}
+    \caption{%
+        \textbf{Persistence diagrams by coda type.}
+        Each panel shows the $H_0$ (connected components, blue) and $H_1$
+        (loops, orange) persistence diagrams for one coda type. Points
+        far from the diagonal indicate long-lived topological features.
+        Rhythm classes exhibit systematically different topological
+        complexity.
+    }
+    \label{fig:persistence}
+\end{figure}
 
-We applied nine parametric acoustic transforms (additive noise, pink
-noise, Doppler shift, multipath echo, amplitude scaling, time stretch,
-spectral mask, click dropout, time shift) at 11 graduated intensity
-levels (0.0 to 1.0) to synthesised coda signals and measured boundary
-crossing rates in ICI feature space (Fig.~\ref{fig:fuzz}).
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig6_tda_features.png}
+    \caption{%
+        \textbf{Topological feature summary.}
+        (\textit{Left}) $H_1$ loop count versus maximum $H_1$ lifetime
+        for each coda type, coloured by rhythm class.
+        (\textit{Right}) Total $H_1$ persistence ranked by coda type.
+        Irregular and compound types show higher topological complexity.
+    }
+    \label{fig:tda_features}
+\end{figure}
 
-\paragraph{Transform sensitivity spectrum.}
+\subsection{SPD manifold analysis of spectral structure}
+
+Frequency-band covariance matrices computed from mel spectrograms of
+synthesised coda signals are symmetric positive definite (SPD) and
+reside on a Riemannian manifold. Using the log-Euclidean metric, we
+extracted SPD features that capture inter-band harmonic correlations
+(figure~\ref{fig:spd}). PCA on SPD features separated coda types with
+different spectral profiles, and the inter-type SPD distance matrix
+showed clear cluster structure aligned with the rhythm class taxonomy.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig7_spd_analysis.png}
+    \caption{%
+        \textbf{SPD manifold analysis.}
+        (\textit{Left}) PCA projection of log-Euclidean SPD covariance
+        features, coloured by coda type. Separation reflects differences
+        in harmonic structure across coda types.
+        (\textit{Right}) Pairwise SPD feature distance between coda types.
+    }
+    \label{fig:spd}
+\end{figure}
+
+\subsection{Decoder Robustness Index}
+\label{sec:dri}
+
+The Decoder Robustness Index (DRI) adapts the Bond Index adversarial
+fuzzing framework to cetacean communication decoders. A simple
+nearest-centroid ICI decoder was tested against nine parametric acoustic
+transforms at three intensity levels, plus 15 compositional transform
+chains (figure~\ref{fig:dri}).
+
+The overall DRI quantifies decoder reliability on a 0--1 scale (lower
+$=$ more robust), decomposed into invariant transforms (where a correct
+decoder should be unaffected) and stress transforms (which may
+legitimately alter classification). Per-transform sensitivity profiles
+and adversarial flip thresholds identify specific failure modes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig8_dri_results.png}
+    \caption{%
+        \textbf{Decoder Robustness Index results.}
+        (\textit{Left}) Per-transform sensitivity profile: mean omega
+        (semantic distance between baseline and perturbed classifications)
+        at full intensity. Red bars indicate high vulnerability.
+        (\textit{Centre}) Adversarial flip thresholds: the minimal
+        intensity at which each transform causes a classification change.
+        Lower thresholds indicate greater vulnerability.
+        (\textit{Right}) DRI gauge showing the overall decoder robustness
+        score.
+    }
+    \label{fig:dri}
+\end{figure}
+
+\subsection{Social unit dialect structure}
+
+To test whether the Poincar\'e embedding captures dialect-level
+structure, we embedded individual codas into the ball and coloured
+them by social unit (figure~\ref{fig:dialects}). Silhouette scores
+quantified within-unit versus between-unit clustering in both the
+Poincar\'e and Euclidean feature spaces. Codas from the same social
+unit formed tighter clusters on the Poincar\'e ball, consistent with
+the hypothesis that hyperbolic geometry captures hierarchical dialect
+structure that Euclidean representations attenuate.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig10_social_units.png}
+    \caption{%
+        \textbf{Social unit dialect structure on the Poincar\'e ball.}
+        (\textit{Left}) Individual codas coloured by coda type.
+        (\textit{Right}) The same embeddings coloured by social unit.
+        Silhouette scores quantify clustering quality in each
+        representation.
+    }
+    \label{fig:dialects}
+\end{figure}
+
+\subsection{Adversarial perturbation as a phonetic boundary discovery tool}
+\label{sec:fuzz}
+
+Beyond robustness evaluation, we used parametric perturbation as an
+instrument for \emph{discovering} phonetic structure. By applying all
+nine acoustic transforms at 11 graduated intensity levels to
+synthesised coda signals and recording which perturbations caused
+classification boundary crossings, we mapped the phonetic decision
+boundaries of the coda system (figure~\ref{fig:fuzz}).
+
+\subsubsection*{Transform sensitivity spectrum}
 Click dropout caused the highest boundary crossing rate (50\% at full
 intensity), confirming that individual clicks are the primary
 information-carrying elements. Time shift, despite being theoretically
@@ -193,67 +384,114 @@ vulnerability. Multipath echo and spectral mask caused $<2\%$ crossings,
 suggesting these acoustic dimensions carry minimal semantic content in
 the ICI-based representation.
 
-\paragraph{Phonetic boundary asymmetry.}
+\subsubsection*{Phonetic boundary asymmetry}
 The phonetic neighbourhood map revealed a mean boundary asymmetry of
 0.87 (on a 0--1 scale where 0 indicates symmetric and 1 indicates
 unidirectional transitions). For example, 5R3 $\to$ 4R2 exhibited 223
 crossings while 4R2 $\to$ 5R3 exhibited 0. This asymmetry is
-reminiscent of directional vowel chain shifts in human
-language~phonology, where perturbation-induced transitions favour
-specific directions.
+reminiscent of directional vowel chain shifts in human phonology, where
+perturbation-induced transitions favour specific directions.
 
-\paragraph{Per-type robustness.}
+\subsubsection*{Per-type robustness}
 Irregular codas exhibited the highest mean activation threshold (0.944),
 while compound codas were least robust (0.800). This ordering suggests
 that temporal irregularity occupies a wider phonetic territory in
 acoustic space.
 
-\paragraph{Channel capacity estimate.}
+\subsubsection*{Channel capacity estimate}
 All eight tested coda types remained well-separated under perturbation
 (activation threshold $> 0.5$), yielding an empirical channel capacity
 estimate of $\log_2(8) = 3.0$ bits per coda. This exceeds the unigram
 entropy of the rhythm distribution alone ($H(R) = 2.1$ bits), consistent
-with multi-feature information encoding.
+with multi-feature information encoding across the combinatorial
+space identified by \citet{Sharma2024}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig11_fuzz_discovery.png}
+    \caption{%
+        \textbf{Adversarial perturbation as phonetic boundary discovery.}
+        (\textit{A}) Transform sensitivity spectrum: boundary crossing
+        rate at full intensity for each acoustic transform. Blue bars
+        denote transforms under which a correct decoder should be
+        invariant; coral bars denote stress transforms.
+        (\textit{B}) Phonetic neighbourhood map: when perturbation causes
+        misclassification, the cell indicates the probability of
+        transitioning to each target type. Note the strong asymmetry.
+        (\textit{C}) Phonetic territory width by coda type: higher
+        activation threshold indicates greater acoustic distinctiveness.
+        (\textit{D}) Feature drift curves for the three most disruptive
+        transforms.
+    }
+    \label{fig:fuzz}
+\end{figure}
 
 \subsection{Linguistic universals in coda communication}
+\label{sec:linguistic}
 
 Analysis of the full DSWP dataset and the associated exchange-level
 dialogues data revealed multiple statistical universals of natural
-language (Fig.~\ref{fig:linguistic}):
+language (figure~\ref{fig:linguistic}).
 
-\paragraph{Menzerath's law.}
+\subsubsection*{Menzerath's law}
 Longer codas (more clicks) had shorter mean ICIs (Spearman $r = -0.269$,
 $p < 10^{-144}$, $n = 8{,}719$), confirming the linguistic universal
 that longer constructs are composed of shorter constituents. This result
 is consistent with the cross-species meta-analysis
 of~\citet{Youngblood2025}.
 
-\paragraph{Zipf's law.}
+\subsubsection*{Zipf's law}
 The rank-frequency distribution of coda types followed a power law with
 exponent $\alpha = 1.44$, steeper than the $\alpha \approx 1.0$ typical
-of human language, indicating a more skewed distribution with a few
-dominant types (1+1+3, 5R1, 5R3).
+of human language, indicating a more skewed distribution dominated by a
+few high-frequency types (1+1+3, 5R1, 5R3). Zipf's law of abbreviation
+(negative correlation between frequency and duration) was not
+statistically significant at the type level ($r = -0.129$, $p = 0.50$),
+though this may reflect the small number of distinct types (28) rather
+than an absence of the effect.
 
-\paragraph{Sequential structure.}
+\subsubsection*{Sequential structure}
 Coda exchanges exhibited first-order Markov dependencies: the mutual
 information between consecutive rhythm types was $I(R_t; R_{t+1}) =
-0.380$ bits, representing 18.0\% of the unigram entropy. Trigram
-prediction accuracy (71.2\%) exceeded bigram accuracy (66.1\%),
-demonstrating higher-order sequential grammar.
+0.380$ bits, representing 18.0\% of the unigram entropy
+($H(R) = 2.111$ bits). Trigram prediction accuracy (71.2\%) exceeded
+bigram accuracy (66.1\%), demonstrating higher-order sequential structure
+beyond pairwise dependencies.
 
-\paragraph{Turn-taking.}
+\subsubsection*{Turn-taking}
 Cross-whale response latency ($\bar{x} = 2.25$~s, $n = 2{,}225$) was
 approximately half that of same-whale continuation latency ($\bar{x} =
 4.68$~s, $n = 1{,}379$), with highly significant distributional
 difference (Kolmogorov--Smirnov $D = 0.560$, $p < 10^{-247}$). This
 indicates active turn-taking rather than independent vocalisation.
 
-\paragraph{Individual accents.}
+\subsubsection*{Individual accents}
 For the most common coda type (1+1+3), pairwise Kolmogorov--Smirnov
 tests between ICI distributions of four identified whales revealed
 statistically significant differences for all six pairs ($p < 0.001$),
 confirming that individuals encode identity information within
-supposedly standardised coda types~\citep{Gero2016,Hersh2022}.
+ostensibly standardised coda types~\citep{Gero2016,Hersh2022}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{fig12_linguistic_properties.png}
+    \caption{%
+        \textbf{Linguistic and information-theoretic properties.}
+        (\textit{A}) Zipf's rank-frequency distribution with fitted power
+        law ($\alpha = 1.44$).
+        (\textit{B}) Zipf's law of abbreviation: log-frequency versus
+        log-duration for the 30 most common types.
+        (\textit{C}) Menzerath's law: mean ICI decreases with click count
+        ($r = -0.269$, $p < 10^{-144}$).
+        (\textit{D}) Individual accents: ICI distributions for four
+        identified whales producing the 1+1+3 coda type.
+        (\textit{E}) Information-theoretic structure: unigram entropy,
+        conditional entropy, and mutual information.
+        (\textit{F}) Turn-taking latency: cross-whale responses are
+        approximately twice as fast as same-whale continuations.
+    }
+    \label{fig:linguistic}
+\end{figure}
 
 % ===================================================================
 \section{Discussion}
@@ -270,20 +508,28 @@ The discovery of highly asymmetric phonetic boundaries (mean asymmetry
 $= 0.87$) is particularly noteworthy. In human phonology, directional
 chain shifts---where perturbation-induced transitions favour specific
 directions---are a well-studied phenomenon that reflects the geometry of
-the phonetic space. The observation of analogous asymmetry in sperm
-whale codas suggests that the coda combinatorial space may possess a
-non-trivial geometric structure with preferred transition directions,
-potentially reflecting acoustic or perceptual constraints on coda
-production and reception.
+the phonetic space~\citep{Cantor2013}. The observation of analogous
+asymmetry in sperm whale codas suggests that the coda combinatorial
+space possesses a non-trivial geometric structure with preferred
+transition directions, potentially reflecting acoustic or perceptual
+constraints on coda production and reception.
 
 The confirmation of multiple linguistic universals (Menzerath's law,
 Zipf's law, higher-order Markov structure, active turn-taking) adds to
 the growing body of evidence~\citep{Youngblood2025} that cetacean
 communication systems share deep statistical regularities with human
 language. The finding that individual whales encode identity within
-ostensibly standardised coda types extends the
-identity-encoding hierarchy documented by \citet{Gero2016}
-and~\citet{Hersh2022}.
+ostensibly standardised coda types extends the identity-encoding
+hierarchy documented by \citet{Gero2016} and~\citet{Hersh2022}, and
+suggests a dual function for codas: type-level information at the
+group/clan scale, and individual-level signatures within each type.
+
+The turn-taking result (2.08$\times$ faster cross-whale responses) is
+consistent with interactive dialogue rather than independent broadcast.
+Combined with the higher-order Markov structure, this suggests that coda
+exchanges involve sequential planning over at least two preceding
+codas---a form of contextual communication that parallels the
+rubato and ornamentation features identified by \citet{Sharma2024}.
 
 The Decoder Robustness Index introduced here provides the first
 systematic framework for evaluating the reliability of cetacean
@@ -291,9 +537,13 @@ communication decoders under realistic acoustic perturbations. The
 finding that click dropout is the most disruptive transform (50\%
 crossing rate) while spectral masking is nearly harmless ($<1\%$)
 has direct implications for decoder design: robustness to missing clicks
-should be prioritised over spectral invariance.
+should be prioritised over spectral invariance. The use of adversarial
+perturbation as a \emph{discovery} tool---rather than merely an
+evaluation metric---represents a methodological contribution applicable
+to any classification system where decision boundaries carry scientific
+meaning.
 
-\paragraph{Limitations.}
+\noindent\textbf{Limitations.}
 The present analysis relies on ICI-based features from the annotated
 DSWP dataset. Extension to raw acoustic features---including the
 vowel-like spectral patterns reported by \citet{Begus2025}---would
@@ -303,9 +553,10 @@ sophisticated models such as WhAM~\citep{Paradise2025} would provide a
 more ecologically meaningful robustness benchmark. The channel capacity
 estimate of 3.0 bits per coda is based on the number of
 well-separated types under perturbation and should be regarded as a
-lower bound.
+lower bound on the true capacity of the multi-feature combinatorial
+system.
 
-\paragraph{Future directions.}
+\noindent\textbf{Future directions.}
 Three avenues are most promising. First, application of the geometric
 framework to other cetacean species---particularly orcas (DCLDE dataset,
 40+ stereotyped call types per community) and humpback whales
@@ -317,7 +568,7 @@ trajectories on manifolds. Third, collaboration with field researchers
 (Project CETI, DSWP) to validate geometric predictions against
 behavioural context and to design playback experiments testing whether
 synthetic codas generated from geometric models elicit appropriate
-responses.
+behavioural responses.
 
 % ===================================================================
 \section{Methods}
@@ -325,87 +576,126 @@ responses.
 \subsection{Data}
 We used the annotated coda dataset from the Dominica Sperm Whale
 Project~\citep{Sharma2024}, comprising 8{,}719 codas with inter-click
-interval measurements, coda type labels, social unit identifiers, and
-individual whale identifiers. The exchange-level dialogues dataset
-(3{,}840 entries) provided sequential ordering and rhythm type labels for
-Markov and turn-taking analyses. Both datasets are publicly available
+interval measurements (up to 9 ICIs per coda), coda type labels,
+duration, social unit identifiers, and individual whale identifiers. The
+exchange-level dialogues dataset (3{,}840 entries with rhythm type
+labels, whale identifiers, and timestamps) provided sequential ordering
+for Markov and turn-taking analyses. Both datasets are publicly available
 under CC BY 4.0 licence.
 
 \subsection{Poincar\'e ball embedding}
 Coda types were parsed into a three-level taxonomy (rhythm class $\to$
-click count $\to$ variant). A taxonomic distance matrix was computed
-as the number of levels at which two types first differ (0--4). Types
-were embedded into a Poincar\'e ball of curvature $c = 1.0$ and
+click count $\to$ variant). A taxonomic distance matrix $D \in
+\mathbb{R}^{n \times n}$ was computed as the number of levels at which
+two types first differ, yielding integer distances in $\{0, 1, 2, 3, 4\}$.
+Types were embedded into a Poincar\'e ball of curvature $c = 1.0$ and
 dimension $d = \min(16, n_\mathrm{types})$ via gradient descent
 minimising the mean squared error between embedded hyperbolic distances
-and true taxonomic distances. Euclidean baselines used PCA on the same
-distance matrix.
+and normalised taxonomic distances. Euclidean baselines used PCA on the
+distance matrix. Distortion was quantified via Spearman rank correlation
+between true and embedded pairwise distances.
 
 \subsection{Classification}
 A Hyperbolic Multinomial Logistic Regression (HyperbolicMLR) classifier
-was trained on 11-dimensional feature vectors (9 duration-normalised ICI
-features, log-duration, normalised click count) with class prototypes
-initialised from the taxonomic embeddings. Features were standardised
-and mapped to the Poincar\'e ball via the exponential map at the origin,
-with scaling calibrated to the 95th percentile of input norms. Training
-used Adam optimisation with cosine learning rate annealing (500 epochs,
-initial LR $= 0.02$, minimum LR $= 10^{-4}$). Euclidean baselines
-(logistic regression, $k$-NN with $k = 5$, random forest with 100
-trees) were trained on the same features.
+was trained on 11-dimensional feature vectors: 9 duration-normalised ICI
+features (ICI divided by total coda duration, yielding a
+tempo-invariant rhythm representation), log-duration, and normalised
+click count. Features were standardised (zero mean, unit variance) and
+mapped to the Poincar\'e ball via the exponential map at the origin,
+with scaling calibrated to the 95th percentile of input norms (target
+norm $= 0.3$). Class prototypes were initialised from the taxonomic
+Poincar\'e embeddings. Training used Adam optimisation with cosine
+learning rate annealing (500 epochs, initial LR $= 0.02$, minimum LR
+$= 10^{-4}$, cross-entropy loss). Euclidean baselines (logistic
+regression, $k$-NN with $k = 5$, random forest with 100 trees) were
+trained on the same standardised features with an 80/20 stratified
+train/test split.
 
 \subsection{Topological data analysis}
 For each coda type with $\geq 40$ samples, an ICI point cloud was
-constructed in $\mathbb{R}^9$. Point clouds exceeding 300 points were
-subsampled with fixed random seed. Vietoris--Rips persistent homology
-was computed to dimension 1 using Ripser~\citep{Bauer2021}. Features
-extracted from persistence diagrams included $H_0$ and $H_1$ counts,
-maximum and total lifetime, mean birth and death times, and entropy of
-the persistence distribution.
+constructed in $\mathbb{R}^9$ from the filled-zero ICI vectors. Point
+clouds exceeding 300 points were randomly subsampled (seed $= 42$).
+Vietoris--Rips persistent homology was computed to dimension 1 using
+Ripser~\citep{Bauer2021,Tralie2018}. Eight features were extracted per
+homology dimension: count, maximum lifetime, total lifetime, mean birth
+time, mean death time, mean lifetime, lifetime standard deviation, and
+persistence entropy~\citep{Otter2017}.
+
+\subsection{SPD manifold analysis}
+Mel spectrograms ($n_\mathrm{mels} = 64$, FFT size $= 1024$,
+hop $= 256$) were computed from synthesised coda signals. Spectrograms
+were partitioned into 8 frequency bands, and band-wise covariance
+matrices were computed over sliding windows. The log-Euclidean
+metric~\citep{Carlsson2009} on the SPD manifold was used to compute
+pairwise distances and extract features via eigenvalue decomposition of
+the matrix logarithm.
 
 \subsection{Decoder Robustness Index}
-Nine parametric acoustic transforms were applied at 11 intensity levels
-(0.0 to 1.0) to synthesised coda signals. Coda signals were synthesised
-from ICI data as Gaussian-enveloped 5~kHz click trains. The DRI was
-computed as $\text{DRI} = 0.5 \cdot \bar{\omega} + 0.3 \cdot
-\omega_{75} + 0.2 \cdot \omega_{95}$, where $\omega$ is the graduated
-semantic distance between baseline and perturbed classifications.
-Adversarial thresholds were found via binary search for the minimal
-intensity causing a classification flip.
+Coda signals were synthesised from ICI data as Gaussian-enveloped
+5~kHz click trains at 32~kHz sample rate. Nine parametric acoustic
+transforms were applied at 11 intensity levels (0.0 to 1.0): additive
+Gaussian noise, pink noise, Doppler shift, multipath echo, amplitude
+scaling, time stretch, spectral mask, click dropout, and circular time
+shift. Each transform satisfies the identity property: at intensity 0.0,
+the signal is unchanged. Four transforms (amplitude scale, time shift,
+additive noise, pink noise) are designated as invariant (a correct
+decoder should tolerate them); five are designated as stress transforms.
+
+The DRI was computed as $\text{DRI} = 0.5 \cdot \bar{\omega} + 0.3
+\cdot \omega_{75} + 0.2 \cdot \omega_{95}$, where $\omega$ is the
+graduated semantic distance between baseline and perturbed
+classifications. Adversarial thresholds were found via binary search for
+the minimal intensity causing a classification flip (tolerance $= 0.01$).
+Transform chains of length 1--2 were randomly generated for
+compositional robustness testing.
+
+For the phonetic boundary discovery analysis, all nine transforms were
+applied at 11 intensity levels to 20 codas per type for the 8 most
+frequent types, and boundary crossing rates, phonetic neighbourhood
+transition matrices, and per-type activation thresholds were computed.
 
 \subsection{Statistical analyses}
 Zipf's law was assessed by fitting a power law $f(r) = C \cdot
-r^{-\alpha}$ to the rank-frequency distribution. Menzerath's law was
-tested via Spearman rank correlation between click count and mean ICI.
-Sequential structure was quantified via unigram entropy, bigram
-conditional entropy, and mutual information. Individual accents were
-tested via pairwise Kolmogorov--Smirnov tests on ICI distributions.
-Turn-taking was assessed by comparing inter-coda intervals for same-whale
-versus cross-whale transitions within recording sessions.
+r^{-\alpha}$ to the rank-frequency distribution via nonlinear
+least-squares. Menzerath's law was tested via Spearman rank correlation
+between click count and mean ICI. Sequential structure was quantified
+via unigram entropy $H(R) = -\sum_r p(r) \log_2 p(r)$, bigram
+conditional entropy $H(R_{t+1} | R_t)$, and mutual information
+$I = H(R) - H(R_{t+1} | R_t)$. Prediction accuracy was computed as the
+proportion of transitions correctly predicted by the most common
+successor (bigram) or most common successor given the preceding pair
+(trigram). Individual accents were tested via pairwise Kolmogorov--Smirnov
+tests on ICI distributions for whales with $\geq 10$ codas of the same
+type. Turn-taking was assessed by comparing inter-coda intervals for
+same-whale versus cross-whale transitions within recording sessions,
+with significance assessed via Kolmogorov--Smirnov test.
 
 \subsection{Software}
 All analyses were implemented in the \texttt{eris-ketos} Python package
-(v0.1.0), available at \url{https://pypi.org/project/eris-ketos/} and
-\url{https://github.com/ahb-sjsu/eris-ketos}. The package depends on
+(v0.1.0), available on
+\href{https://pypi.org/project/eris-ketos/}{PyPI} and
+\href{https://github.com/ahb-sjsu/eris-ketos}{GitHub}. The package depends on
 NumPy, PyTorch, scikit-learn, Ripser, and librosa. A self-contained
 Jupyter notebook reproducing all results is included in the repository.
 
 % ===================================================================
 \section*{Data availability}
-The DSWP coda annotation dataset is available at
-\url{https://github.com/pratyushasharma/sw-combinatoriality} under
-CC BY 4.0 licence. Raw audio recordings are available on HuggingFace
-at \url{https://huggingface.co/datasets/orrp/DSWP}.
+The DSWP coda annotation dataset is available at the
+\href{https://github.com/pratyushasharma/sw-combinatoriality}{Sharma et al.\ GitHub repository}
+under CC BY 4.0 licence. Raw audio recordings are available on the
+\href{https://huggingface.co/datasets/orrp/DSWP}{DSWP HuggingFace dataset}.
 
 \section*{Code availability}
-The \texttt{eris-ketos} package is available at
-\url{https://github.com/ahb-sjsu/eris-ketos} under MIT licence.
+The \texttt{eris-ketos} package is available at the
+\href{https://github.com/ahb-sjsu/eris-ketos}{eris-ketos GitHub repository}
+under MIT licence.
 
 \section*{Acknowledgements}
 We thank Shane Gero and the Dominica Sperm Whale Project for making the
 coda annotation data publicly available, and Pratyusha Sharma and
 colleagues for releasing the combinatorial analysis code and data. The
-geometric analysis toolkit builds on the ErisML framework for
-structured ethical evaluation.
+geometric analysis toolkit builds on the ErisML framework for structured
+ethical evaluation.
 
 % ===================================================================
 \bibliographystyle{plainnat}
