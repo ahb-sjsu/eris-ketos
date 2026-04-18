@@ -6,7 +6,6 @@
 import numpy as np
 import pytest
 
-
 # ripser is the [tda] extra and is not installed by default. Skip the
 # whole module when it is missing so the default test run stays green.
 pytest.importorskip('ripser')
