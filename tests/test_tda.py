@@ -8,7 +8,7 @@ import pytest
 
 # ripser is the [tda] extra and is not installed by default. Skip the
 # whole module when it is missing so the default test run stays green.
-pytest.importorskip('ripser')
+pytest.importorskip("ripser")
 
 from eris_ketos.tda_clicks import (
     compute_persistence,
