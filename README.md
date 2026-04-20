@@ -27,6 +27,48 @@ eris-ketos provides three geometric analysis methods and an adversarial robustne
 | `spd_spectral` | SPD manifold metrics | Spectral covariance ("vowel" patterns) |
 | `decoder_robustness` | Adversarial fuzzing (DRI) | Decoder failure modes under acoustic perturbations |
 
+```mermaid
+flowchart TB
+    subgraph DATA[Data]
+      A["Sperm whale audio<br/>(DSWP, Sharma 2024)"]
+      F[Click / coda features]
+    end
+
+    subgraph MODS["Geometric analysis modules"]
+      direction LR
+      P[poincare_coda<br/>Hyperbolic ball]
+      T[tda_clicks<br/>Persistent homology]
+      S[spd_spectral<br/>SPD manifold]
+    end
+
+    subgraph ADV[Adversarial robustness]
+      AT[acoustic_transforms<br/>noise, doppler, dropout...]
+      DRI[DecoderRobustnessIndex]
+    end
+
+    DEC[Your decoder]
+    REP[Classifier / report<br/>HyperbolicMLR logits,<br/>DRI score]
+
+    A --> F --> P
+    F --> T
+    F --> S
+    AT --> DRI
+    DEC --> DRI
+    P --> REP
+    T --> REP
+    S --> REP
+    DRI --> REP
+
+    classDef data fill:#e3f2fd,stroke:#1565c0;
+    classDef mod fill:#fff3e0,stroke:#e65100;
+    classDef adv fill:#f3e5f5,stroke:#6a1b9a;
+    classDef out fill:#c8e6c9,stroke:#1b5e20;
+    class A,F data;
+    class P,T,S mod;
+    class AT,DRI,DEC adv;
+    class REP out;
+```
+
 ## Installation
 
 ```bash
